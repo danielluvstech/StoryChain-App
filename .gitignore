@@ -1,4 +1,6 @@
-# Node modules
+# -------------------------
+# Node.js / Backend
+# -------------------------
 node_modules/
 **/node_modules/
 
@@ -18,16 +20,26 @@ pnpm-debug.log*
 # Build output
 dist/
 build/
-.cache/
-.next/
-out/
 coverage/
 
-# IDE / OS files
-.vscode/
-.idea/
+# -------------------------
+# Frontend (React / Vite)
+# -------------------------
+# Vite cache
+.cache/
+.vite/
+
+# Build artifacts
+out/
+*.tsbuildinfo
+
+# -------------------------
+# OS / IDE files
+# -------------------------
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
 
 # Misc
 *.log
