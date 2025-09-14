@@ -1,6 +1,8 @@
 // backend/src/server.js
 const express = require("express");
 const cors = require("cors");
+const storiesRouter = require("./routes/stories.routes");
+const { authGuard } = require("./middleware/auth.middleware");
 require("dotenv").config();
 
 const authRouter = require("./routes/auth.routes");
@@ -10,6 +12,8 @@ const { healthcheck } = require("./db");
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/stories", authGuard, storiesRouter);
 
 // health routes
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
