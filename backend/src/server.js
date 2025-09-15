@@ -4,7 +4,6 @@ const cors = require("cors");
 const storiesRouter = require("./routes/stories.routes");
 const { authGuard } = require("./middleware/auth.middleware");
 const paragraphsRouter = require("./routes/paragraphs.routes");
-const { authGuard } = require("./middleware/auth.middleware");
 require("dotenv").config();
 
 const authRouter = require("./routes/auth.routes");
