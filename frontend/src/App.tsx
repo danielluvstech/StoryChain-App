@@ -15,20 +15,54 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function Layout({ children }: { children: React.ReactNode }) {
   const token = useAppSelector((s) => s.auth.token);
   const dispatch = useAppDispatch();
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
-      <header style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-        <Link to="/stories">Stories</Link>
-        {!token ? (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
-          </>
-        ) : (
-          <button onClick={() => dispatch(logout())}>Logout</button>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 text-gray-900">
+      <header className="border-b bg-white/80 backdrop-blur">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
+          <Link to={token ? "/stories" : "/login"} className="font-semibold">
+            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              StoryChain
+            </span>
+          </Link>
+
+          <nav className="ml-auto flex items-center gap-4">
+            {token ? (
+              <>
+                <Link
+                  to="/stories"
+                  className="text-sm text-gray-700 hover:text-gray-900"
+                >
+                  Stories
+                </Link>
+                <button
+                  onClick={() => dispatch(logout())}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Register
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
       </header>
-      {children}
+
+      <main className="max-w-3xl mx-auto px-4 py-8">{children}</main>
     </div>
   );
 }
