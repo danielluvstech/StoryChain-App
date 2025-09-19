@@ -99,9 +99,6 @@ const slice = createSlice({
 
      .addCase(fetchParticipants.fulfilled, (s, { payload }) => { s.participants = payload; })
 
-     .addCase(joinStory.fulfilled, (s) => { /* will refetch participants in UI */ })
-     .addCase(leaveStory.fulfilled, (s) => { /* will refetch participants in UI */ })
-
      .addCase(addParagraph.fulfilled, (s, { payload }) => {
        s.paragraphs = [...s.paragraphs, payload];
      });
