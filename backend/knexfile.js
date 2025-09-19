@@ -6,10 +6,10 @@ const {
   PGPORT,
   PGUSER,
   PGPASSWORD,
-  PGDATABASE
+  PGDATABASE,
 } = process.env;
 
-const connection =
+const devConnection =
   DATABASE_URL || {
     host: PGHOST || "127.0.0.1",
     port: PGPORT ? Number(PGPORT) : 5432,
@@ -21,7 +21,7 @@ const connection =
 module.exports = {
   development: {
     client: "pg",
-    connection,
+    connection: devConnection,
     pool: { min: 0, max: 10 },
     migrations: {
       tableName: "knex_migrations",
@@ -30,5 +30,19 @@ module.exports = {
     seeds: {
       directory: "./seeds",
     },
+  },
+
+  production: {
+    client: "pg",
+    connection: DATABASE_URL, // Render External URL with sslmode=require
+    pool: { min: 2, max: 10 },
+    migrations: {
+      tableName: "knex_migrations",
+      directory: "./migrations",
+    },
+    seeds: {
+      directory: "./seeds",
+    },
+    ssl: { rejectUnauthorized: false }, // helps with cert errors
   },
 };
