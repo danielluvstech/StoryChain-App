@@ -1,15 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { addParagraph, fetchParticipants, fetchStoryWithParagraphs, joinStory, leaveStory } from "../features/storyDetail/storyDetailSlice";
+import {
+  addParagraph,
+  fetchParticipants,
+  fetchStoryWithParagraphs,
+  joinStory,
+  leaveStory,
+} from "../features/storyDetail/storyDetailSlice";
+import { Button, Input, Badge } from "../components/ui";
 
 export default function StoryDetail() {
   const { id } = useParams();
   const storyId = Number(id);
   const dispatch = useAppDispatch();
 
-  const { story, paragraphs, participants, loading, error } = useAppSelector(s => s.storyDetail);
-  const user = useAppSelector(s => s.auth.user);
+  const { story, paragraphs, participants, loading, error } = useAppSelector(
+    (s) => s.storyDetail
+  );
+  const user = useAppSelector((s) => s.auth.user);
 
   const [text, setText] = useState("");
   const [err, setErr] = useState("");
@@ -58,60 +67,88 @@ export default function StoryDetail() {
   const canContribute = story.status === "ongoing" && isParticipant;
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <h2 style={{ margin: 0 }}>{story.title}</h2>
-        <span style={{ padding: "2px 6px", border: "1px solid #ccc", borderRadius: 6 }}>{story.status}</span>
+    <div className="grid gap-6">
+      <div className="flex items-center justify-center gap-3">
+        <h2 className="text-3xl font-extrabold text-center">
+          <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            {story.title}
+          </span>
+        </h2>
+        <Badge tone={story.status === "finished" ? "green" : "yellow"}>
+          {story.status}
+        </Badge>
       </div>
 
-      {(error || err) && <div style={{ color: "crimson" }}>{error || err}</div>}
+      {(error || err) && (
+        <div className="text-red-600 text-center">{error || err}</div>
+      )}
 
-      <section>
-        <h3>Participants</h3>
+      <section className="grid gap-2">
+        <h3 className="font-semibold text-center">Participants</h3>
         {participants.length === 0 ? (
-          <div>No participants yet</div>
+          <div className="text-gray-700 text-center">No participants yet</div>
         ) : (
-          <ol>
+          <ol className="list-decimal list-inside grid gap-1 bg-white/80 backdrop-blur rounded-xl border px-4 py-3">
             {participants.map((p) => (
-              <li key={p.id}>
-                #{p.join_order} — {p.username} {p.user_id === user?.id ? "(you)" : ""}
+              <li key={p.id} className="flex items-center gap-2">
+                <span className="font-mono mr-1">#{p.join_order}</span>
+                <span>
+                  {p.username} {p.user_id === user?.id ? <em>(you)</em> : null}
+                </span>
               </li>
             ))}
           </ol>
         )}
 
         {story.status === "ongoing" && (
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <div className="flex items-center justify-center gap-2 mt-2">
             {!isParticipant ? (
-              <button onClick={onJoin}>Join story</button>
+              <Button onClick={onJoin}>Join story</Button>
             ) : (
-              <button onClick={onLeave}>Leave story</button>
+              <Button variant="ghost" onClick={onLeave}>
+                Leave story
+              </Button>
             )}
           </div>
         )}
       </section>
 
-      <section>
-        <h3>Story</h3>
-        <ol>
+      <section className="grid gap-3">
+        <h3 className="font-semibold text-center">Story</h3>
+        <ol className="grid gap-3">
           {paragraphs.map((p) => (
-            <li key={p.id} style={{ marginBottom: 8 }}>
-              <div><strong>#{p.order_index}</strong> (user {p.user_id})</div>
-              <div>{p.text}</div>
+            <li
+              key={p.id}
+              className="list-decimal list-inside bg-white/80 backdrop-blur border rounded-xl px-4 py-3"
+            >
+              <div className="text-sm text-gray-600">
+                <strong>#{p.order_index}</strong> (user {p.user_id})
+              </div>
+              <div className="mt-1 whitespace-pre-wrap">{p.text}</div>
             </li>
           ))}
         </ol>
       </section>
 
       {canContribute && (
-        <div style={{ display: "flex", gap: 8 }}>
-          <input placeholder="Add your paragraph…" value={text} onChange={(e) => setText(e.target.value)} />
-          <button onClick={onAddParagraph} disabled={!text.trim()}>Add</button>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Input
+              placeholder="Add your paragraph…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </div>
+          <Button onClick={onAddParagraph} disabled={!text.trim()}>
+            Add
+          </Button>
         </div>
       )}
 
       {!isParticipant && story.status === "ongoing" && (
-        <div style={{ color: "#555" }}>Join the story to contribute your next paragraph.</div>
+        <div className="text-gray-700 text-center">
+          Join the story to contribute your next paragraph.
+        </div>
       )}
     </div>
   );
