@@ -1,31 +1,31 @@
-import { FormEvent, useState } from "react";
-import { useAuth } from "../auth/AuthContext";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { registerThunk } from "../features/auth/authSlice";
 
 export default function Register() {
-  const { register } = useAuth();
+  const dispatch = useAppDispatch();
   const nav = useNavigate();
   const [username, setU] = useState("");
   const [password, setP] = useState("");
-  const [err, setErr] = useState("");
+  const { loading, error } = useAppSelector((s) => s.auth);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    try {
-      await register(username, password);
+    const action = await dispatch(registerThunk({ username, password }));
+    if (registerThunk.fulfilled.match(action)) {
       nav("/stories");
-    } catch (e: any) {
-      setErr(e?.response?.data?.message || "Register failed");
     }
   }
 
   return (
     <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 360 }}>
       <h2>Register</h2>
-      {err && <div style={{ color: "crimson" }}>{err}</div>}
+      {error && <div style={{ color: "crimson" }}>{error}</div>}
       <input placeholder="username" value={username} onChange={(e) => setU(e.target.value)} />
       <input placeholder="password" type="password" value={password} onChange={(e) => setP(e.target.value)} />
-      <button type="submit">Create account</button>
+      <button type="submit" disabled={loading}>{loading ? "..." : "Create account"}</button>
     </form>
   );
 }

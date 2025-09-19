@@ -1,26 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../lib/api";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
-
-type Paragraph = { id: number; text: string; order_index: number; user_id: number };
-type Story = { id: number; title: string; status: "ongoing" | "finished"; created_by?: number };
-type Participant = {
-  id: number;
-  story_id: number;
-  user_id: number;
-  join_order: number;
-  username: string;
-};
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { addParagraph, fetchParticipants, fetchStoryWithParagraphs, joinStory, leaveStory } from "../features/storyDetail/storyDetailSlice";
 
 export default function StoryDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
   const storyId = Number(id);
+  const dispatch = useAppDispatch();
 
-  const [story, setStory] = useState<Story | null>(null);
-  const [paragraphs, setParagraphs] = useState<Paragraph[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const { story, paragraphs, participants, loading, error } = useAppSelector(s => s.storyDetail);
+  const user = useAppSelector(s => s.auth.user);
+
   const [text, setText] = useState("");
   const [err, setErr] = useState("");
 
@@ -29,60 +19,41 @@ export default function StoryDetail() {
     [participants, user]
   );
 
-  async function loadAll() {
-    try {
-      const [detailRes, partsRes] = await Promise.all([
-        api.get(`/api/stories/${storyId}?include=paragraphs`),
-        api.get<Participant[]>(`/api/stories/${storyId}/participants`),
-      ]);
-      setStory(detailRes.data.story);
-      setParagraphs(detailRes.data.paragraphs);
-      setParticipants(partsRes.data);
-    } catch {
-      setErr("Failed to load story");
-    }
-  }
-
   useEffect(() => {
     if (!Number.isFinite(storyId)) return;
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyId]);
+    dispatch(fetchStoryWithParagraphs(storyId));
+    dispatch(fetchParticipants(storyId));
+  }, [dispatch, storyId]);
 
-  async function addParagraph() {
+  async function onAddParagraph() {
     setErr("");
-    try {
-      const { data } = await api.post(`/api/stories/${storyId}/paragraphs`, { text });
-      setParagraphs((p) => [...p, data]);
+    const action = await dispatch(addParagraph({ storyId, text }));
+    if (addParagraph.fulfilled.match(action)) {
       setText("");
-    } catch (e: any) {
-      const msg = e?.response?.data?.message || "Add failed";
-      const expected = e?.response?.data?.expectedJoinOrder;
+    } else {
+      const payload: any = action.payload;
+      const msg = payload?.message || "Add failed";
+      const expected = payload?.expectedJoinOrder;
       setErr(expected ? `${msg}. Expected turn order: ${expected}` : msg);
     }
   }
 
-  async function joinStory() {
+  async function onJoin() {
     setErr("");
-    try {
-      await api.post(`/api/stories/${storyId}/join`);
-      await loadAll();
-    } catch (e: any) {
-      setErr(e?.response?.data?.message || "Join failed");
-    }
+    const a = await dispatch(joinStory(storyId));
+    if (joinStory.fulfilled.match(a)) dispatch(fetchParticipants(storyId));
+    else setErr(String(a.payload || "Join failed"));
   }
 
-  async function leaveStory() {
+  async function onLeave() {
     setErr("");
-    try {
-      await api.delete(`/api/stories/${storyId}/participants/me`);
-      await loadAll();
-    } catch (e: any) {
-      setErr(e?.response?.data?.message || "Leave failed");
-    }
+    const a = await dispatch(leaveStory(storyId));
+    if (leaveStory.fulfilled.match(a)) dispatch(fetchParticipants(storyId));
+    else setErr(String(a.payload || "Leave failed"));
   }
 
-  if (!story) return <div>Loading...</div>;
+  if (loading && !story) return <div>Loading...</div>;
+  if (!story) return <div>Not found</div>;
 
   const canContribute = story.status === "ongoing" && isParticipant;
 
@@ -90,18 +61,10 @@ export default function StoryDetail() {
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <h2 style={{ margin: 0 }}>{story.title}</h2>
-        <span
-          style={{
-            padding: "2px 6px",
-            border: "1px solid #ccc",
-            borderRadius: 6,
-          }}
-        >
-          {story.status}
-        </span>
+        <span style={{ padding: "2px 6px", border: "1px solid #ccc", borderRadius: 6 }}>{story.status}</span>
       </div>
 
-      {err && <div style={{ color: "crimson" }}>{err}</div>}
+      {(error || err) && <div style={{ color: "crimson" }}>{error || err}</div>}
 
       <section>
         <h3>Participants</h3>
@@ -120,9 +83,9 @@ export default function StoryDetail() {
         {story.status === "ongoing" && (
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             {!isParticipant ? (
-              <button onClick={joinStory}>Join story</button>
+              <button onClick={onJoin}>Join story</button>
             ) : (
-              <button onClick={leaveStory}>Leave story</button>
+              <button onClick={onLeave}>Leave story</button>
             )}
           </div>
         )}
@@ -133,9 +96,7 @@ export default function StoryDetail() {
         <ol>
           {paragraphs.map((p) => (
             <li key={p.id} style={{ marginBottom: 8 }}>
-              <div>
-                <strong>#{p.order_index}</strong> (user {p.user_id})
-              </div>
+              <div><strong>#{p.order_index}</strong> (user {p.user_id})</div>
               <div>{p.text}</div>
             </li>
           ))}
@@ -144,21 +105,13 @@ export default function StoryDetail() {
 
       {canContribute && (
         <div style={{ display: "flex", gap: 8 }}>
-          <input
-            placeholder="Add your paragraph…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <button onClick={addParagraph} disabled={!text.trim()}>
-            Add
-          </button>
+          <input placeholder="Add your paragraph…" value={text} onChange={(e) => setText(e.target.value)} />
+          <button onClick={onAddParagraph} disabled={!text.trim()}>Add</button>
         </div>
       )}
 
       {!isParticipant && story.status === "ongoing" && (
-        <div style={{ color: "#555" }}>
-          Join the story to contribute your next paragraph.
-        </div>
+        <div style={{ color: "#555" }}>Join the story to contribute your next paragraph.</div>
       )}
     </div>
   );
