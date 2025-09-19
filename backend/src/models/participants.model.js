@@ -8,9 +8,22 @@ async function addParticipant({ story_id, user_id, join_order }) {
 }
 
 async function listByStory(story_id) {
-  return db("participants")
-    .where({ story_id })
-    .orderBy("join_order", "asc");
+  return db("participants").where({ story_id }).orderBy("join_order", "asc");
+}
+
+async function listWithUsersByStory(story_id) {
+  return db("participants as p")
+    .join("users as u", "u.id", "p.user_id")
+    .where("p.story_id", story_id)
+    .select(
+      "p.id",
+      "p.story_id",
+      "p.user_id",
+      "p.join_order",
+      "p.created_at",
+      "u.username"
+    )
+    .orderBy("p.join_order", "asc");
 }
 
 async function isParticipant({ story_id, user_id }) {
@@ -42,6 +55,7 @@ async function removeParticipant({ story_id, user_id }) {
 module.exports = {
   addParticipant,
   listByStory,
+  listWithUsersByStory,
   isParticipant,
   getJoinOrder,
   nextJoinOrder,
