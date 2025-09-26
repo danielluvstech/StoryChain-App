@@ -104,6 +104,14 @@ Migrations for users, stories, participants, paragraphs
 
 Knex-powered queries for portability
 
+Future Releases
+
+ Real-time updates (WebSocket/polling)
+ Reactions/Likes per paragraph
+ Profiles (bio, contributions list)
+ Prompts/Genres on story creation
+ Story Gallery
+
 ⚡ Getting Started (Local Dev)
 1. Clone the repo
 git clone https://github.com/danielluvstech/StoryChain-App.git
@@ -135,17 +143,9 @@ Frontend: Render Static Site (frontend/)
 
 DB: Render Postgres
 
-📸 Screenshots
-
-(Add a few images — Login, Story List, Story Detail — to make it pop!)
-
 👨‍💻 Author
 
 Built with ❤️ by Daniel Lewin
-
-LinkedIn
-
-GitHub
 
 📜 License
 
